@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
-project(SDL3ImGuiApp LANGUAGES CXX)
+set(PROJECT_NAME "SDL3ImGuiApp" CACHE STRING "Project name")
+project(${PROJECT_NAME} LANGUAGES CXX)
 
 if(NOT MSVC)
     message(FATAL_ERROR "This project uses the prebuilt MSVC (VC) SDL3 packages. Use a Visual Studio generator.")
@@ -83,7 +84,15 @@ set(IMGUI_SOURCES
     ${DEPS_DIR}/imgui/backends/imgui_impl_sdl3.cpp
     ${DEPS_DIR}/imgui/backends/imgui_impl_sdlrenderer3.cpp)
 
-add_executable(app src/main.cpp ${IMGUI_SOURCES})
+# Auto-discover all source files in src/ (including subfolders)
+file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS
+    "src/*.cpp"
+    "src/*.c"
+    "src/*.hpp"
+    "src/*.h"
+)
+
+add_executable(${PROJECT_NAME} ${APP_SOURCES} ${IMGUI_SOURCES})
 
 # ---------------------------------------------------------------------------
 # Include / library paths expressed with $(SolutionDir).
@@ -94,7 +103,7 @@ add_executable(app src/main.cpp ${IMGUI_SOURCES})
 file(RELATIVE_PATH DEPS_REL "${CMAKE_BINARY_DIR}" "${DEPS_DIR}")
 set(DEPS_VS "$(SolutionDir)${DEPS_REL}")
 
-target_compile_options(app PRIVATE
+target_compile_options(${PROJECT_NAME} PRIVATE
     "/I${DEPS_VS}/SDL3/include"
     "/I${DEPS_VS}/SDL3_image/include"
     "/I${DEPS_VS}/SDL3_mixer/include"
@@ -102,23 +111,24 @@ target_compile_options(app PRIVATE
     "/I${DEPS_VS}/imgui"
     /utf-8)
 
-target_link_options(app PRIVATE
+target_link_options(${PROJECT_NAME} PRIVATE
     "/LIBPATH:${DEPS_VS}/SDL3/lib/x64"
     "/LIBPATH:${DEPS_VS}/SDL3_image/lib/x64"
     "/LIBPATH:${DEPS_VS}/SDL3_mixer/lib/x64"
     "/LIBPATH:${DEPS_VS}/SDL3_ttf/lib/x64")
 
-target_link_libraries(app PRIVATE
+target_link_libraries(${PROJECT_NAME} PRIVATE
     SDL3.lib SDL3_image.lib SDL3_mixer.lib SDL3_ttf.lib)
 
 # Copy the runtime DLLs next to the exe after every build
-add_custom_command(TARGET app POST_BUILD
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${DEPS_DIR}/SDL3/lib/x64/SDL3.dll"
         "${DEPS_DIR}/SDL3_image/lib/x64/SDL3_image.dll"
         "${DEPS_DIR}/SDL3_mixer/lib/x64/SDL3_mixer.dll"
         "${DEPS_DIR}/SDL3_ttf/lib/x64/SDL3_ttf.dll"
-        "$<TARGET_FILE_DIR:app>")
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>")
 
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT app)
-set_target_properties(app PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)")
+# Set this project as the default startup project (overrides ALL_BUILD)
+set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
+set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)")   

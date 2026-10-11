@@ -1,4 +1,4 @@
-// Interpolation playground: lerp, easing, color lerp, 2D slerp, quaternion slerp.
+﻿// Interpolation playground: lerp, easing, color lerp, 2D slerp, quaternion slerp.
 // SDL3 draws the four demo panels, Dear ImGui drives all the values.
 
 #include <SDL3/SDL.h>
